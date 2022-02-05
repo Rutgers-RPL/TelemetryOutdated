@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+    <script type="text/javascript" src="js/download.js"></script>
+</head>
+
+<body>
+<button id="portSelect" type="button">Select a port</button>
+<div id="connectionInfoDisplay">Connection Information</div>
+<button id="disconnectButton" type="button">Disconnect</button>
+<script>
+navigator.serial.addEventListener('connect', (e) => {
+  // Connect to `e.target` or add it to a list of available ports.
+  console.log(e);
+});
+
+navigator.serial.addEventListener('disconnect', (e) => {
+  // Remove `e.target` from the list of available ports.
+  console.log(e);
+});
+
+navigator.serial.getPorts().then((ports) => {
+  console.log(ports)
+});
+document.getElementById("portSelect").addEventListener("click",start)
+var totalreadings = '';
+var decoder = new TextDecoder();
+var readings = new Uint8Array();
+
+
+
+async function start(){
+	var port = await navigator.serial.requestPort();
+	await port.open({ baudRate: 115200, });
+	while (port.readable) {
+	  const reader = port.readable.getReader();
+	  try {
+	    while (true) {
+	      const { value, done } = await reader.read();
+	      if (done) {
+	        // |reader| has been canceled.
+	        break;
+	      }
+	      var mergedArray = new Uint8Array(readings.length + value.length);
+		mergedArray.set(readings);
+		mergedArray.set(value, readings.length);
+		readings = mergedArray;
+	      //totalreadings += decoder.decode(value);
+	      // Do something with |value|...
+	    }
+	  } catch (error) {
+	    // Handle |error|...
+	  } finally {
+	    reader.releaseLock();
+	  }
+	}
+}
+</script>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Test Decode</title>
+    <meta charset="UTF-8" />
+    <script type="text/javascript" src="bundle.js"></script>
+</head>
+
+<body>
+<script>
+const STRUCT_FORMAT = '< I f f f f f f f f f d d I';
+const STRUCT_PROPS = ['magic','time','latitude','longitude','altitude','accx','accy','accz','mA','V','temp','pressure','checksum']
+const MAGIC = 0xBEEFF00D;
+function bufferToJSON(buffer){
+    var unpacked = struct.unpack(STRUCT_FORMAT, buffer);
+    var json = {};
+    for(var i=0;i<unpacked.length;i++){
+        json[STRUCT_PROPS[i]] = unpacked[i];
+    }
+    return json;
+}
+var SIZE = struct.sizeOf(STRUCT_FORMAT);
+
+async function main(){
+	var gpsdata = await fetch('gpsdump.bin').then(res=>res.arrayBuffer());
+	var buf = Buffer.from(gpsdata)
+	//var buf = Buffer.from(gpsdata, 'utf8');
+	console.log(gpsdata)
+	var testbuffer = buf.slice(0,SIZE);
+    var unpacked = bufferToJSON(testbuffer);
+    console.log(unpacked,unpacked.magic==MAGIC)
+}
+main();
+</script>
+</body>
+
+</html>

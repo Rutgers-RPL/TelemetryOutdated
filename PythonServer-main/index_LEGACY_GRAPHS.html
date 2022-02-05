@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+		<div>Time Elapsed: <span id="elapsed"></span> seconds</div>
+		<div id="tempChart" style="width: 45%; height: 300px;display:inline-block;"></div>
+		<div id="pressureChart" style="width: 45%; height: 300px;display:inline-block;"></div>
+		<div id="altitudeChart" style="width: 45%; height: 300px;display:inline-block;"></div>
+		<div id="accxChart" style="width: 45%; height: 300px;display:inline-block;"></div>
+
+	</body>
+	<script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+	<script>
+	var url = (document.location.href.startsWith('https')?'wss://':'ws://')+document.domain
+	var ws = new WebSocket(url);
+	var elapsedIndicator = document.getElementById("elapsed");
+	initialTime = -999
+	frameSize = 1000 //maximum number of datapoints
+	n = 0
+	data = {}
+	data.temp = {points:[],chart:0};
+	data.temp.chart = new CanvasJS.Chart("tempChart", {
+		title:{
+			text: "Temperature"
+		},
+		data: [{
+				 type: "line",
+				 dataPoints: data.temp.points
+			}]
+	});
+
+	data.pressure = {points:[],chart:0};
+	data.pressure.chart = new CanvasJS.Chart("pressureChart", {
+		title:{
+			text: "Pressure"
+		},
+		data: [{
+				 type: "line",
+				 dataPoints: data.pressure.points
+			}]
+	});
+
+	data.altitude = {points:[],chart:0};
+	data.altitude.chart = new CanvasJS.Chart("altitudeChart", {
+		title:{
+			text: "Altitude"
+		},
+		data: [{
+				 type: "line",
+				 dataPoints: data.altitude.points
+			}]
+	});
+
+	data.accx = {points:[],chart:0};
+	data.accx.chart = new CanvasJS.Chart("accxChart", {
+		title:{
+			text: "Acceleration x"
+		},
+		data: [{
+				 type: "line",
+				 dataPoints: data.accx.points
+			}]
+	});
+
+      // Set event handlers.
+  		ws.onopen = function() {
+        console.log("onopen");
+		    for(var i in data)
+					data[i].chart.render();
+      };
+
+      ws.onmessage = function(e) {
+        // e.data contains received string.
+				const message = JSON.parse(e.data);
+				n+=1;
+				console.log(n);
+				if(initialTime == -999)
+					initialTime = message.time;
+				elapsedIndicator.innerHTML=(message.time-initialTime)/1000;
+				data.temp.points.push({x:message.time,y:message.temp})
+				data.pressure.points.push({x:message.time,y:message.pressure})
+				data.altitude.points.push({x:message.time,y:message.altitude})
+				data.accx.points.push({x:message.time,y:message.accx})
+				for(var i in data){
+					if(data[i].points.length > frameSize)
+						data[i].points.shift();
+					data[i].chart.render();
+				}
+      };
+
+      ws.onclose = function() {
+        console.log("onclose");
+      };
+
+      ws.onerror = function(e) {
+        console.log("onerror");
+        console.log(e)
+      };
+	</script>
+</html>
